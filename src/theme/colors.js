@@ -1,7 +1,7 @@
 export const colors = {
   primary: '#2F6F4E',      // verde: salud, confianza
   primaryLight: '#E7F3EC',
-  accent: '#F2A65A',       // acento cálido: rachas y logros
+  accent: '#F2A65A',       // acento cálido para detalles puntuales de la UI
   background: '#FAFAF8',
   surface: '#FFFFFF',
   text: '#1F2A24',

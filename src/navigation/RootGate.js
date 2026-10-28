@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppNavigator from './AppNavigator';
 import OnboardingScreen from '../screens/OnboardingScreen';
+import WelcomeScreen from '../screens/WelcomeScreen';
 import { useUser } from '../context/UserContext';
 import { colors, spacing } from '../theme/colors';
 
-// Decide qué mostrar primero: cargando, error de conexión, el registro
-// (si no hay perfil completo todavía), o la app normal (tabs).
+// Decide qué mostrar primero: cargando, error de conexión, la bienvenida +
+// el registro (si no hay perfil completo todavía), o la app normal (tabs).
 export default function RootGate() {
   const { user, loading, error, needsOnboarding, refresh, submitOnboarding, cancelEditingProfile } = useUser();
+  // La pantalla de bienvenida solo se muestra una vez, a una persona
+  // completamente nueva (sin perfil todavía) — no cuando alguien ya
+  // registrado vuelve a entrar o está editando su perfil existente.
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
 
   if (loading) {
     return (
@@ -36,6 +41,9 @@ export default function RootGate() {
   }
 
   if (needsOnboarding) {
+    if (!user && !welcomeDismissed) {
+      return <WelcomeScreen onContinue={() => setWelcomeDismissed(true)} />;
+    }
     return (
       <OnboardingScreen
         existingUser={user}

@@ -49,10 +49,11 @@ una capa de guardrails deterministas antes de mostrarse al usuario.
 - **Modo sin conexión**: si no hay red, muestra el último plan guardado en el
   dispositivo en vez de dejar al usuario sin nada.
 - **Exportar a PDF/Excel.**
-- **Recordatorio diario** (notificación local) y una racha de días de uso — **sin
-  medallas, sin logros, sin comparación entre usuarios**: se descartó a propósito un
-  sistema de gamificación basado en recompensas, por la evidencia de que ese tipo de
-  mecánica puede incitar trastornos alimenticios.
+- **Recordatorio diario** (notificación local) para abrir la app y generar el plan del
+  día — **sin medallas, sin logros, sin rachas ni comparación entre usuarios**: se
+  descartó a propósito cualquier mecánica de gamificación basada en recompensas o
+  constancia numérica, por la evidencia de que ese tipo de mecánica puede incitar
+  trastornos alimenticios.
 
 ## Arquitectura
 

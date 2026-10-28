@@ -66,16 +66,6 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Racha de días de uso — nunca de peso ni medidas. Es solo
-            información, sin medallas ni comparación con nadie. */}
-        <View style={styles.streakCard}>
-          <Ionicons name="flame" size={28} color={colors.accent} />
-          <View style={{ marginLeft: spacing.sm }}>
-            <Text style={styles.streakNumber}>{user.streakDays} días</Text>
-            <Text style={styles.streakLabel}>de registro constante</Text>
-          </View>
-        </View>
-
         <Text style={styles.sectionTitle}>Tu plan de hoy</Text>
         {planLoading && !plan ? (
           <ActivityIndicator color={colors.primary} style={{ marginBottom: spacing.lg }} />
@@ -123,16 +113,6 @@ const styles = StyleSheet.create({
   retryButtonText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
   greeting: { fontSize: 24, fontWeight: '700', color: colors.text },
   subGreeting: { fontSize: 14, color: colors.textMuted, marginTop: 2, marginBottom: spacing.lg },
-  streakCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primaryLight,
-    borderRadius: 16,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  streakNumber: { fontSize: 18, fontWeight: '700', color: colors.text },
-  streakLabel: { fontSize: 12, color: colors.textMuted },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',

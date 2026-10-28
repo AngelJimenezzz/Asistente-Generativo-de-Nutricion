@@ -97,7 +97,6 @@ export default function ProfileScreen() {
           <InfoRow icon="restaurant-outline" label="Filosofía alimentaria" value={labelFor(DIET_PHILOSOPHY_OPTIONS, user.dietaryProfile.dietPhilosophy)} />
           <InfoRow icon="wallet-outline" label="Presupuesto" value={labelFor(BUDGET_TIER_OPTIONS, user.lifestyleProfile.budgetTier)} />
           <InfoRow icon="location-outline" label="País" value={user.lifestyleProfile.region ?? '—'} />
-          <InfoRow icon="flame-outline" label="Racha actual" value={`${user.streakDays} días`} />
         </View>
 
         <View style={[styles.card, styles.settingsCard]}>

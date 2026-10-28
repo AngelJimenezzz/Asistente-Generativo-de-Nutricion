@@ -109,4 +109,3 @@ class UserUpdate(UserBase):
 
 class UserOut(UserBase):
     id: str
-    streak_days: int = 0

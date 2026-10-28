@@ -85,7 +85,6 @@ export const api = {
   createUser: (payload) => request('/api/users', { method: 'POST', body: JSON.stringify(payload) }),
   getUser: (userId) => request(`/api/users/${userId}`),
   updateUser: (userId, payload) => request(`/api/users/${userId}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  checkinUser: (userId) => request(`/api/users/${userId}/checkin`, { method: 'POST' }),
 
   createPlan: (payload) => request('/api/plans', { method: 'POST', body: JSON.stringify(payload) }),
   getPlan: (planId) => request(`/api/plans/${planId}`),

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme/colors';
@@ -21,29 +21,8 @@ export default function PlanScreen() {
   const [swappingMealId, setSwappingMealId] = useState(null);
   const [swapError, setSwapError] = useState(null);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
+  const [exportError, setExportError] = useState(null);
   const { days, loading, error, createTestPlan, generatePlanWithAI, generating, swapMeal, offline } = useWeekPlan();
-
-  const openSocialEvent = () => {
-    Alert.alert(
-      'Tengo una salida con amigos',
-      'Cuéntanos a dónde vas o qué se te antoja, y te ayudamos a elegir bien en el momento y a ajustar el resto de tu día — para que disfrutes tu salida sin sentir que rompiste tu plan.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Continuar', onPress: () => setSocialModalOpen(true) },
-      ]
-    );
-  };
-
-  const openBudget = () => {
-    Alert.alert(
-      'Ajustar por presupuesto/disponibilidad',
-      'Cuéntanos qué alimentos tienes disponibles esta semana o cuál es tu límite de gasto, y te sugerimos cómo ajustar tu plan sin perder el equilibrio nutricional.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Continuar', onPress: () => setBudgetModalOpen(true) },
-      ]
-    );
-  };
 
   const toggleExplain = (id) => setExpandedId(expandedId === id ? null : id);
   const activeDay = days[Math.min(selectedDay, days.length - 1)] ?? null;
@@ -72,10 +51,11 @@ export default function PlanScreen() {
 
   const runExport = async (fn) => {
     setExporting(true);
+    setExportError(null);
     try {
       await fn(days, user?.name ?? 'Usuario');
     } catch (err) {
-      Alert.alert('No se pudo exportar', err.message);
+      setExportError(err.message);
     } finally {
       setExporting(false);
     }
@@ -157,6 +137,7 @@ export default function PlanScreen() {
                 {exporting && <ActivityIndicator color={colors.primary} size="small" />}
               </View>
             )}
+            {exportError && <Text style={styles.whyText}>{exportError}</Text>}
 
             {activeDay && (
               <Text style={styles.dayMacros}>
@@ -216,20 +197,31 @@ export default function PlanScreen() {
           </>
         )}
 
-        <Pressable style={styles.actionCard} onPress={openSocialEvent}>
-          <Ionicons name="restaurant-outline" size={20} color={colors.primary} />
-          <Text style={styles.actionText}>Tengo una salida con amigos</Text>
+        <Pressable style={styles.actionCardColumn} onPress={() => setSocialModalOpen(true)}>
+          <View style={styles.actionCardRow}>
+            <Ionicons name="restaurant-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionText}>Tengo una salida con amigos</Text>
+          </View>
+          <Text style={styles.actionSubtext}>
+            Cuéntale a la IA a dónde vas y te ayuda a elegir bien en el momento, sin sentir que rompiste tu plan.
+          </Text>
         </Pressable>
 
-        <Pressable style={styles.actionCard} onPress={openBudget}>
-          <Ionicons name="wallet-outline" size={20} color={colors.primary} />
-          <Text style={styles.actionText}>Ajustar por presupuesto/disponibilidad</Text>
+        <Pressable style={styles.actionCardColumn} onPress={() => setBudgetModalOpen(true)}>
+          <View style={styles.actionCardRow}>
+            <Ionicons name="wallet-outline" size={20} color={colors.primary} />
+            <Text style={styles.actionText}>Ajustar por presupuesto/disponibilidad</Text>
+          </View>
+          <Text style={styles.actionSubtext}>
+            Dile qué alimentos tienes o cuánto quieres gastar y te sugiere sustituciones sin perder el equilibrio nutricional.
+          </Text>
         </Pressable>
       </ScrollView>
 
       <AdviceModal
         visible={socialModalOpen}
         title="Tengo una salida con amigos"
+        explanation="Cuéntanos a dónde vas o qué se te antoja, y te ayudamos a elegir bien en el momento y a ajustar el resto de tu día — para que disfrutes tu salida sin sentir que rompiste tu plan."
         placeholder="Ej. Voy a cenar a un restaurante italiano con mis amigos..."
         apiCall={api.getSocialEventAdvice}
         onClose={() => setSocialModalOpen(false)}
@@ -237,6 +229,7 @@ export default function PlanScreen() {
       <AdviceModal
         visible={budgetModalOpen}
         title="Ajustar por presupuesto/disponibilidad"
+        explanation="Cuéntanos qué alimentos tienes disponibles esta semana o cuál es tu límite de gasto, y te sugerimos cómo ajustar tu plan sin perder el equilibrio nutricional."
         placeholder="Ej. Solo tengo huevo, frijol y arroz esta semana..."
         apiCall={api.getBudgetAdvice}
         onClose={() => setBudgetModalOpen(false)}
@@ -291,6 +284,20 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   actionText: { fontSize: 14, color: colors.text, marginLeft: spacing.sm, fontWeight: '600' },
+  actionCardColumn: {
+    backgroundColor: colors.primaryLight,
+    borderRadius: 14,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  actionCardRow: { flexDirection: 'row', alignItems: 'center' },
+  actionSubtext: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
+    marginLeft: 28,
+    lineHeight: 16,
+  },
   primaryButton: {
     flexDirection: 'row',
     alignItems: 'center',

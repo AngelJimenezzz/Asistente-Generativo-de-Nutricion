@@ -23,14 +23,6 @@ export function UserProvider({ children }) {
       if (storedId) {
         try {
           currentUser = await api.getUser(storedId);
-          // Racha de días consecutivos de uso — se actualiza una vez por
-          // arranque de la app. Si falla, no es grave: seguimos con los
-          // datos que ya teníamos en vez de tumbar toda la carga de la app.
-          try {
-            currentUser = await api.checkinUser(storedId);
-          } catch {
-            // la racha no se actualizó esta vez, no pasa nada
-          }
           // No se espera (await) a propósito: si el usuario niega el permiso
           // o tarda, no debe retrasar la carga de la app.
           applyStoredReminderPreference();
@@ -61,11 +53,6 @@ export function UserProvider({ children }) {
       const payload = { ...formData, onboardingComplete: true };
       let saved = user ? await api.updateUser(user.id, payload) : await api.createUser(payload);
       await AsyncStorage.setItem(USER_ID_KEY, saved.id);
-      try {
-        saved = await api.checkinUser(saved.id);
-      } catch {
-        // la racha no se actualizó, no es motivo para fallar el registro
-      }
       applyStoredReminderPreference();
       setUser(saved);
       setEditingProfile(false);

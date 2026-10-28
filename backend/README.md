@@ -55,7 +55,6 @@ conexiones entrantes al puerto 8000 la primera vez que ejecutes esto.
 | POST | `/api/users` | Crear usuario (perfil completo del registro; pasa por guardrails de perfil) |
 | GET | `/api/users/{user_id}` | Obtener usuario |
 | PUT | `/api/users/{user_id}` | Reemplazar el perfil completo (usado por "editar perfil") — ⚠️ ver nota abajo |
-| POST | `/api/users/{user_id}/checkin` | Actualiza la racha de días consecutivos de uso — se llama una vez al abrir la app |
 | POST | `/api/plans` | Crear un plan (pasa por guardrails clínicos; 422 si no los pasa) |
 | POST | `/api/plans/validate` | Correr los guardrails sobre un plan sin guardarlo |
 | GET | `/api/plans/{plan_id}` | Obtener un plan |
@@ -335,7 +334,7 @@ aguja al entrenar, y luego correr el notebook completo en Colab.
 
 ## Notas de diseño
 
-- Los modelos Pydantic exponen JSON en camelCase (`streakDays`, `goalProfile`,
+- Los modelos Pydantic exponen JSON en camelCase (`goalProfile`,
   `anthropometrics`, etc.) para coincidir con las convenciones de la app móvil.
 - El perfil de usuario (`app/models/user.py`) agrupa los ~30 campos del registro en
   sub-modelos temáticos (`anthropometrics`, `activityLevel`, `goalProfile`,

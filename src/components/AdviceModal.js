@@ -7,17 +7,23 @@ import { colors, spacing } from '../theme/colors';
 import { useUser } from '../context/UserContext';
 
 // Modal genérico para las funciones de "una pregunta, un consejo" (Tengo una
-// salida con amigos / Ajustar por presupuesto-disponibilidad). El usuario
-// escribe su situación en texto libre y recibe una respuesta de la IA basada
-// en su perfil, condición clínica y plan actual.
-export default function AdviceModal({ visible, title, placeholder, apiCall, onClose }) {
+// salida con amigos / Ajustar por presupuesto-disponibilidad). Muestra primero
+// una explicación de qué hace la función (dentro del propio modal, no con
+// Alert.alert — Alert.alert con varios botones no se renderiza de forma
+// confiable en la versión web de Expo, así que antes el usuario ni veía la
+// opción de continuar) y, al confirmar, el usuario escribe su situación en
+// texto libre y recibe una respuesta de la IA basada en su perfil, condición
+// clínica y plan actual.
+export default function AdviceModal({ visible, title, explanation, placeholder, apiCall, onClose }) {
   const { user } = useUser();
+  const [stage, setStage] = useState('intro'); // 'intro' | 'form' | 'result'
   const [situation, setSituation] = useState('');
   const [advice, setAdvice] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const reset = () => {
+    setStage('intro');
     setSituation('');
     setAdvice(null);
     setError(null);
@@ -35,11 +41,19 @@ export default function AdviceModal({ visible, title, placeholder, apiCall, onCl
     try {
       const result = await apiCall(user.id, situation.trim());
       setAdvice(result.advice);
+      setStage('result');
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const askAgain = () => {
+    setSituation('');
+    setAdvice(null);
+    setError(null);
+    setStage('form');
   };
 
   return (
@@ -54,7 +68,19 @@ export default function AdviceModal({ visible, title, placeholder, apiCall, onCl
           </View>
 
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-            {!advice ? (
+            {stage === 'intro' && (
+              <>
+                <View style={styles.explanationCard}>
+                  <Ionicons name="information-circle-outline" size={20} color={colors.primary} style={{ marginBottom: spacing.xs }} />
+                  <Text style={styles.explanationText}>{explanation}</Text>
+                </View>
+                <Pressable style={styles.submitButton} onPress={() => setStage('form')}>
+                  <Text style={styles.submitButtonText}>Entendido, continuar</Text>
+                </Pressable>
+              </>
+            )}
+
+            {stage === 'form' && (
               <>
                 <TextInput
                   style={styles.input}
@@ -64,6 +90,7 @@ export default function AdviceModal({ visible, title, placeholder, apiCall, onCl
                   placeholderTextColor={colors.textMuted}
                   multiline
                   editable={!loading}
+                  autoFocus
                 />
                 <Pressable style={styles.submitButton} onPress={submit} disabled={loading || !situation.trim()}>
                   {loading ? (
@@ -74,13 +101,15 @@ export default function AdviceModal({ visible, title, placeholder, apiCall, onCl
                 </Pressable>
                 {error && <Text style={styles.errorText}>{error}</Text>}
               </>
-            ) : (
+            )}
+
+            {stage === 'result' && (
               <>
                 <View style={styles.adviceCard}>
                   <Ionicons name="sparkles-outline" size={18} color={colors.primary} style={{ marginBottom: spacing.xs }} />
                   <Text style={styles.adviceText}>{advice}</Text>
                 </View>
-                <Pressable style={styles.secondaryButton} onPress={reset}>
+                <Pressable style={styles.secondaryButton} onPress={askAgain}>
                   <Text style={styles.secondaryButtonText}>Preguntar otra cosa</Text>
                 </Pressable>
               </>
@@ -110,6 +139,13 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 17, fontWeight: '700', color: colors.text, flex: 1, marginRight: spacing.md },
   body: { padding: spacing.lg, paddingTop: spacing.sm },
+  explanationCard: {
+    backgroundColor: colors.primaryLight,
+    borderRadius: 14,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  explanationText: { fontSize: 14, color: colors.text, lineHeight: 20 },
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,

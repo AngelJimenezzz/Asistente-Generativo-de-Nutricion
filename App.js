@@ -2,15 +2,21 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import AppNavigator from './src/navigation/AppNavigator';
+import RootGate from './src/navigation/RootGate';
+import { UserProvider } from './src/context/UserContext';
+import { PlanProvider } from './src/context/PlanContext';
 
 export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <NavigationContainer>
-        <AppNavigator />
-      </NavigationContainer>
+      <UserProvider>
+        <PlanProvider>
+          <NavigationContainer>
+            <RootGate />
+          </NavigationContainer>
+        </PlanProvider>
+      </UserProvider>
     </SafeAreaProvider>
   );
 }

@@ -1,71 +1,251 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme/colors';
-import { mockPlan } from '../data/mockData';
+import { useUser } from '../context/UserContext';
+import { useWeekPlan } from '../context/PlanContext';
+import { exportPlanAsPdf, exportPlanAsExcel } from '../utils/exportPlan';
+import { api } from '../services/api';
+import AdviceModal from '../components/AdviceModal';
+import GeneratingPlanLoader from '../components/GeneratingPlanLoader';
+import ShoppingListModal from '../components/ShoppingListModal';
 
 export default function PlanScreen() {
+  const { user } = useUser();
   const [expandedId, setExpandedId] = useState(null);
+  const [selectedDay, setSelectedDay] = useState(0);
+  const [exporting, setExporting] = useState(false);
+  const [socialModalOpen, setSocialModalOpen] = useState(false);
+  const [budgetModalOpen, setBudgetModalOpen] = useState(false);
+  const [swappingMealId, setSwappingMealId] = useState(null);
+  const [swapError, setSwapError] = useState(null);
+  const [shoppingListOpen, setShoppingListOpen] = useState(false);
+  const { days, loading, error, createTestPlan, generatePlanWithAI, generating, swapMeal, offline } = useWeekPlan();
+
+  const openSocialEvent = () => {
+    Alert.alert(
+      'Tengo una salida con amigos',
+      'Cuéntanos a dónde vas o qué se te antoja, y te ayudamos a elegir bien en el momento y a ajustar el resto de tu día — para que disfrutes tu salida sin sentir que rompiste tu plan.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Continuar', onPress: () => setSocialModalOpen(true) },
+      ]
+    );
+  };
+
+  const openBudget = () => {
+    Alert.alert(
+      'Ajustar por presupuesto/disponibilidad',
+      'Cuéntanos qué alimentos tienes disponibles esta semana o cuál es tu límite de gasto, y te sugerimos cómo ajustar tu plan sin perder el equilibrio nutricional.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Continuar', onPress: () => setBudgetModalOpen(true) },
+      ]
+    );
+  };
 
   const toggleExplain = (id) => setExpandedId(expandedId === id ? null : id);
+  const activeDay = days[Math.min(selectedDay, days.length - 1)] ?? null;
+
+  const handleGenerate = async () => {
+    setSelectedDay(0);
+    try {
+      await generatePlanWithAI();
+    } catch {
+      // el error ya queda en el estado del hook y se muestra abajo
+    }
+  };
+
+  const handleSwapMeal = async (meal) => {
+    if (!activeDay) return;
+    setSwapError(null);
+    setSwappingMealId(meal.id);
+    try {
+      await swapMeal(activeDay.id, meal.id);
+    } catch (err) {
+      setSwapError(err.message);
+    } finally {
+      setSwappingMealId(null);
+    }
+  };
+
+  const runExport = async (fn) => {
+    setExporting(true);
+    try {
+      await fn(days, user?.name ?? 'Usuario');
+    } catch (err) {
+      Alert.alert('No se pudo exportar', err.message);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Tu plan de hoy</Text>
+        <Text style={styles.title}>Tu plan</Text>
 
-        {mockPlan.meals.map((meal) => (
-          <View key={meal.id} style={styles.card}>
-            <Text style={styles.mealName}>{meal.name}</Text>
-            {meal.items.map((item, i) => (
-              <Text key={i} style={styles.mealItem}>• {item}</Text>
-            ))}
-
-            <Pressable onPress={() => toggleExplain(meal.id)} style={styles.whyButton}>
-              <Ionicons
-                name="bulb-outline"
-                size={16}
-                color={colors.primary}
-              />
-              <Text style={styles.whyButtonText}>
-                {expandedId === meal.id ? 'Ocultar explicación' : '¿Por qué este alimento?'}
-              </Text>
-            </Pressable>
-
-            {expandedId === meal.id && (
-              <Text style={styles.whyText}>{meal.why}</Text>
-            )}
+        {offline && (
+          <View style={styles.offlineBanner}>
+            <Ionicons name="cloud-offline-outline" size={16} color={colors.textMuted} />
+            <Text style={styles.offlineBannerText}>
+              Sin conexión — mostrando el último plan guardado en tu teléfono.
+            </Text>
           </View>
-        ))}
+        )}
 
-        {/* Placeholders — se conectan a lógica real cuando exista el backend */}
-        <Pressable
-          style={styles.actionCard}
-          onPress={() =>
-            Alert.alert(
-              'Plan B',
-              'Aquí irá el simulador de escenarios sociales: "Estoy en una comida familiar, ¿cómo ajusto el resto del día?"'
-            )
-          }
-        >
+        {loading && days.length === 0 ? (
+          <ActivityIndicator color={colors.primary} style={{ marginBottom: spacing.lg }} />
+        ) : days.length === 0 ? (
+          <View style={styles.card}>
+            <Text style={styles.mealItem}>Todavía no tienes un plan.</Text>
+
+            <Pressable style={styles.primaryButton} onPress={handleGenerate} disabled={generating}>
+              {generating ? (
+                <ActivityIndicator color="#FFF" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="sparkles-outline" size={18} color="#FFF" />
+                  <Text style={styles.primaryButtonText}>Generar mi plan con IA</Text>
+                </>
+              )}
+            </Pressable>
+            {generating && <GeneratingPlanLoader />}
+
+            <Pressable style={styles.actionCard} onPress={createTestPlan}>
+              <Ionicons name="flask-outline" size={20} color={colors.primary} />
+              <Text style={styles.actionText}>Generar plan de prueba (sin IA, gratis)</Text>
+            </Pressable>
+            {error && <Text style={styles.whyText}>{error.message}</Text>}
+          </View>
+        ) : (
+          <>
+            {days.length > 1 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayTabs}>
+                {days.map((day, i) => {
+                  const selected = i === selectedDay;
+                  return (
+                    <Pressable
+                      key={day.id}
+                      style={[styles.dayTab, selected && styles.dayTabSelected]}
+                      onPress={() => setSelectedDay(i)}
+                    >
+                      <Text style={[styles.dayTabText, selected && styles.dayTabTextSelected]}>
+                        {day.dayOfWeek || `Día ${day.dayIndex}`}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
+
+            {days.length > 0 && (
+              <View style={styles.exportRow}>
+                <Pressable style={styles.exportButton} onPress={() => runExport(exportPlanAsPdf)} disabled={exporting}>
+                  <Ionicons name="document-text-outline" size={16} color={colors.primary} />
+                  <Text style={styles.exportButtonText}>Exportar PDF</Text>
+                </Pressable>
+                <Pressable style={styles.exportButton} onPress={() => runExport(exportPlanAsExcel)} disabled={exporting}>
+                  <Ionicons name="grid-outline" size={16} color={colors.primary} />
+                  <Text style={styles.exportButtonText}>Exportar Excel</Text>
+                </Pressable>
+                <Pressable style={styles.exportButton} onPress={() => setShoppingListOpen(true)}>
+                  <Ionicons name="cart-outline" size={16} color={colors.primary} />
+                  <Text style={styles.exportButtonText}>Lista de compras</Text>
+                </Pressable>
+                {exporting && <ActivityIndicator color={colors.primary} size="small" />}
+              </View>
+            )}
+
+            {activeDay && (
+              <Text style={styles.dayMacros}>
+                {activeDay.calories} kcal · {activeDay.macros.protein}g prot ·{' '}
+                {activeDay.macros.carbs}g carb · {activeDay.macros.fat}g grasa
+              </Text>
+            )}
+
+            {activeDay?.meals.map((meal) => {
+              const isSwapping = swappingMealId === meal.id;
+              return (
+                <View key={meal.id} style={styles.card}>
+                  <Text style={styles.mealName}>{meal.name}</Text>
+                  {meal.items.map((item, i) => (
+                    <Text key={i} style={styles.mealItem}>• {item}</Text>
+                  ))}
+
+                  <View style={styles.mealActionsRow}>
+                    <Pressable onPress={() => toggleExplain(meal.id)} style={styles.whyButton}>
+                      <Ionicons name="bulb-outline" size={16} color={colors.primary} />
+                      <Text style={styles.whyButtonText}>
+                        {expandedId === meal.id ? 'Ocultar explicación' : '¿Por qué este alimento?'}
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => handleSwapMeal(meal)}
+                      style={styles.whyButton}
+                      disabled={isSwapping || swappingMealId !== null}
+                    >
+                      {isSwapping ? (
+                        <ActivityIndicator color={colors.primary} size="small" />
+                      ) : (
+                        <Ionicons name="swap-horizontal-outline" size={16} color={colors.primary} />
+                      )}
+                      <Text style={styles.whyButtonText}>
+                        {isSwapping ? 'Cambiando...' : 'Cambiar esta comida'}
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {expandedId === meal.id && <Text style={styles.whyText}>{meal.why}</Text>}
+                </View>
+              );
+            })}
+            {swapError && <Text style={styles.whyText}>{swapError}</Text>}
+
+            <Pressable style={styles.actionCard} onPress={handleGenerate} disabled={generating}>
+              {generating ? (
+                <ActivityIndicator color={colors.primary} size="small" />
+              ) : (
+                <Ionicons name="refresh-outline" size={20} color={colors.primary} />
+              )}
+              <Text style={styles.actionText}>Generar otra vez el plan de hoy</Text>
+            </Pressable>
+            {error && <Text style={styles.whyText}>{error.message}</Text>}
+          </>
+        )}
+
+        <Pressable style={styles.actionCard} onPress={openSocialEvent}>
           <Ionicons name="restaurant-outline" size={20} color={colors.primary} />
-          <Text style={styles.actionText}>Simular un evento social (Plan B)</Text>
+          <Text style={styles.actionText}>Tengo una salida con amigos</Text>
         </Pressable>
 
-        <Pressable
-          style={styles.actionCard}
-          onPress={() =>
-            Alert.alert(
-              'Sustitución por presupuesto',
-              'Aquí irá el ajuste de tu plan según tu presupuesto semanal o los ingredientes que tengas disponibles.'
-            )
-          }
-        >
+        <Pressable style={styles.actionCard} onPress={openBudget}>
           <Ionicons name="wallet-outline" size={20} color={colors.primary} />
           <Text style={styles.actionText}>Ajustar por presupuesto/disponibilidad</Text>
         </Pressable>
       </ScrollView>
+
+      <AdviceModal
+        visible={socialModalOpen}
+        title="Tengo una salida con amigos"
+        placeholder="Ej. Voy a cenar a un restaurante italiano con mis amigos..."
+        apiCall={api.getSocialEventAdvice}
+        onClose={() => setSocialModalOpen(false)}
+      />
+      <AdviceModal
+        visible={budgetModalOpen}
+        title="Ajustar por presupuesto/disponibilidad"
+        placeholder="Ej. Solo tengo huevo, frijol y arroz esta semana..."
+        apiCall={api.getBudgetAdvice}
+        onClose={() => setBudgetModalOpen(false)}
+      />
+      <ShoppingListModal
+        visible={shoppingListOpen}
+        days={days}
+        onClose={() => setShoppingListOpen(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -84,10 +264,16 @@ const styles = StyleSheet.create({
   },
   mealName: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 6 },
   mealItem: { fontSize: 14, color: colors.text, marginBottom: 2 },
+  mealActionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    gap: spacing.md,
+  },
   whyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.sm,
   },
   whyButtonText: { fontSize: 13, color: colors.primary, marginLeft: 6, fontWeight: '600' },
   whyText: {
@@ -105,4 +291,52 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   actionText: { fontSize: 14, color: colors.text, marginLeft: spacing.sm, fontWeight: '600' },
+  primaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  primaryButtonText: { color: '#FFF', fontWeight: '700', fontSize: 15 },
+  dayTabs: { marginBottom: spacing.sm },
+  dayTab: {
+    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    marginRight: spacing.sm,
+  },
+  dayTabSelected: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+  dayTabText: { fontSize: 13, fontWeight: '600', color: colors.text },
+  dayTabTextSelected: { color: colors.primary },
+  exportRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+  },
+  exportButtonText: { fontSize: 13, fontWeight: '600', color: colors.primary },
+  dayMacros: { fontSize: 13, color: colors.textMuted, marginBottom: spacing.md },
+  offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.border,
+    borderRadius: 12,
+    padding: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  offlineBannerText: { fontSize: 12, color: colors.textMuted, flex: 1 },
 });

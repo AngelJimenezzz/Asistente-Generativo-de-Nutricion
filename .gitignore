@@ -31,6 +31,7 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
@@ -39,3 +40,26 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Python / backend
+backend/venv/
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.log
+
+# scripts/datos sueltos de depuración, no son parte del proyecto
+backend/_week_result.json
+backend/chat_models.txt
+
+# documentos de la tesis (no van en el repo público) y notas internas de planeación
+docs/*.docx
+docs/*.pdf
+docs/~$*
+docs/TESIS*
+docs/CONTEXTO_PROYECTO.md
+CLAUDE.md
+
+# configuración local de herramientas de desarrollo, no es parte del proyecto
+.claude/

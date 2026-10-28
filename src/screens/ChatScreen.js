@@ -1,37 +1,51 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TextInput, Pressable, KeyboardAvoidingView, Platform,
+  View, Text, StyleSheet, FlatList, TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme/colors';
+import { useUser } from '../context/UserContext';
+import { api } from '../services/api';
 
 const INITIAL_MESSAGES = [
   {
     id: '0',
-    from: 'assistant',
-    text: 'Hola, soy tu asistente de nutrición. Cuéntame cómo te sientes hoy o pregúntame sobre tu plan.',
+    role: 'assistant',
+    content: 'Hola, soy tu asistente de nutrición. Cuéntame cómo te sientes hoy o pregúntame sobre tu plan.',
   },
 ];
 
 export default function ChatScreen() {
+  const { user } = useUser();
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const send = () => {
-    if (!input.trim()) return;
-    const userMsg = { id: Date.now().toString(), from: 'user', text: input };
+  const send = async () => {
+    const text = input.trim();
+    if (!text || sending || !user) return;
 
-    // TODO: reemplazar por la llamada real a tu endpoint FastAPI
-    // (RAG + guardrails + modelo LoRA) cuando el backend esté listo.
-    const placeholderReply = {
-      id: (Date.now() + 1).toString(),
-      from: 'assistant',
-      text: '[Respuesta simulada] Cuando el backend esté conectado, aquí verás la recomendación generada, validada y explicada.',
-    };
-
-    setMessages((prev) => [...prev, userMsg, placeholderReply]);
+    const userMsg = { id: Date.now().toString(), role: 'user', content: text };
+    const history = [...messages, userMsg];
+    setMessages(history);
     setInput('');
+    setSending(true);
+
+    try {
+      const { reply } = await api.sendChatMessage(
+        user.id,
+        history.map(({ role, content }) => ({ role, content }))
+      );
+      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: reply }]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 1).toString(), role: 'assistant', content: `No se pudo responder: ${err.message}` },
+      ]);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -49,14 +63,21 @@ export default function ChatScreen() {
             <View
               style={[
                 styles.bubble,
-                item.from === 'user' ? styles.bubbleUser : styles.bubbleAssistant,
+                item.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant,
               ]}
             >
-              <Text style={item.from === 'user' ? styles.bubbleTextUser : styles.bubbleText}>
-                {item.text}
+              <Text style={item.role === 'user' ? styles.bubbleTextUser : styles.bubbleText}>
+                {item.content}
               </Text>
             </View>
           )}
+          ListFooterComponent={
+            sending ? (
+              <View style={[styles.bubble, styles.bubbleAssistant]}>
+                <ActivityIndicator color={colors.primary} size="small" />
+              </View>
+            ) : null
+          }
         />
 
         <View style={styles.inputRow}>
@@ -66,8 +87,10 @@ export default function ChatScreen() {
             onChangeText={setInput}
             placeholder="Escribe tu mensaje..."
             placeholderTextColor={colors.textMuted}
+            editable={!sending}
+            onSubmitEditing={send}
           />
-          <Pressable style={styles.sendButton} onPress={send}>
+          <Pressable style={styles.sendButton} onPress={send} disabled={sending}>
             <Ionicons name="send" size={18} color="#FFF" />
           </Pressable>
         </View>

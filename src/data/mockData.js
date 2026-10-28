@@ -44,9 +44,3 @@ export const mockCircle = {
     { id: '3', name: 'Marisol', streak: 3 },
   ],
 };
-
-export const mockBadges = [
-  { id: '1', label: '7 días de registro', earned: false },
-  { id: '2', label: '5 recetas nuevas probadas', earned: true },
-  { id: '3', label: 'Primer Plan B superado', earned: true },
-];

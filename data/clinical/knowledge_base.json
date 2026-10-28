@@ -1,0 +1,158 @@
+{
+  "metadata": {
+    "version": "0.1",
+    "descripcion": "Base de conocimiento clínico-nutricional curada para el pipeline RAG del Asistente Generativo de Nutrición de Precisión.",
+    "proyecto": "Tesis - Universidad de Colima, Facultad de Telemática",
+    "fecha_curacion": "2026-08",
+    "nota_importante": "Estos documentos son insumo para el sistema RAG. NO sustituyen la valoración de un profesional de la salud. Los rangos son referencias poblacionales generales; la individualización clínica corresponde al nutriólogo tratante.",
+    "criterios_de_inclusion": [
+      "Solo fuentes oficiales: normas oficiales mexicanas, guías de organismos internacionales (OMS/FAO) y asociaciones clínicas reconocidas.",
+      "Se excluye literatura divulgativa, blogs, y cualquier fuente sin respaldo institucional.",
+      "Cada fragmento incluye su fuente para trazabilidad y para permitir citación en las respuestas del asistente."
+    ]
+  },
+
+  "fuentes": [
+    {
+      "id": "nom-043",
+      "titulo": "NOM-043-SSA2-2012, Servicios básicos de salud. Promoción y educación para la salud en materia alimentaria",
+      "emisor": "Secretaría de Salud, México",
+      "uso_en_proyecto": "Marco normativo mexicano para orientación alimentaria; base del Plato del Bien Comer."
+    },
+    {
+      "id": "nom-015",
+      "titulo": "NOM-015-SSA2-2010, Para la prevención, tratamiento y control de la diabetes mellitus",
+      "emisor": "Secretaría de Salud, México",
+      "uso_en_proyecto": "Reglas de manejo nutricional para usuarios con diabetes tipo 2."
+    },
+    {
+      "id": "nom-030",
+      "titulo": "NOM-030-SSA2-2009, Para la prevención, detección, diagnóstico, tratamiento y control de la hipertensión arterial sistémica",
+      "emisor": "Secretaría de Salud, México",
+      "uso_en_proyecto": "Reglas de restricción de sodio para usuarios con hipertensión."
+    },
+    {
+      "id": "oms-sodio",
+      "titulo": "Guideline: Sodium intake for adults and children",
+      "emisor": "Organización Mundial de la Salud (OMS)",
+      "uso_en_proyecto": "Límite superior de sodio en población general."
+    },
+    {
+      "id": "oms-azucares",
+      "titulo": "Guideline: Sugars intake for adults and children",
+      "emisor": "Organización Mundial de la Salud (OMS)",
+      "uso_en_proyecto": "Límite de azúcares libres como porcentaje de la energía total."
+    },
+    {
+      "id": "smae",
+      "titulo": "Sistema Mexicano de Alimentos Equivalentes (SMAE)",
+      "emisor": "Fomento de Nutrición y Salud, A.C.",
+      "uso_en_proyecto": "Sistema de equivalencias usado por nutriólogos en México; base para la sustitución de alimentos por presupuesto/disponibilidad (Fase 4)."
+    },
+    {
+      "id": "fao-who-energia",
+      "titulo": "Human energy requirements: Report of a Joint FAO/WHO/UNU Expert Consultation",
+      "emisor": "FAO/OMS/UNU",
+      "uso_en_proyecto": "Ecuaciones de estimación de gasto energético (Harris-Benedict / Mifflin-St Jeor) y factores de actividad física."
+    }
+  ],
+
+  "documentos": [
+    {
+      "id": "doc-001",
+      "condicion": "general",
+      "tema": "Distribución de macronutrientes en población adulta sana",
+      "contenido": "La distribución aceptable de macronutrientes para adultos sanos se establece habitualmente en: carbohidratos 45-65% de la energía total, proteínas 10-35% y grasas 20-35%. Las grasas saturadas deben mantenerse por debajo del 10% de la energía total. La fibra dietética recomendada es de 25 a 30 gramos diarios.",
+      "fuente_id": "nom-043",
+      "aplicacion_guardrail": "Verificar que la distribución de macros del plan generado caiga dentro de estos rangos."
+    },
+    {
+      "id": "doc-002",
+      "condicion": "general",
+      "tema": "Límite de sodio en población general",
+      "contenido": "La OMS recomienda un consumo menor a 2000 mg de sodio al día en adultos, equivalente a menos de 5 gramos de sal. El consumo excesivo de sodio se asocia a elevación de la presión arterial y mayor riesgo cardiovascular.",
+      "fuente_id": "oms-sodio",
+      "aplicacion_guardrail": "Rechazar planes que excedan 2000 mg de sodio diarios en usuarios sin condición específica."
+    },
+    {
+      "id": "doc-003",
+      "condicion": "general",
+      "tema": "Límite de azúcares libres",
+      "contenido": "La OMS recomienda que los azúcares libres representen menos del 10% de la ingesta energética total, con un beneficio adicional si se reducen por debajo del 5%. Los azúcares libres incluyen los añadidos a alimentos y bebidas, así como los presentes naturalmente en miel, jarabes y jugos de fruta.",
+      "fuente_id": "oms-azucares",
+      "aplicacion_guardrail": "Calcular el porcentaje de energía proveniente de azúcares libres y alertar si supera el 10%."
+    },
+    {
+      "id": "doc-004",
+      "condicion": "diabetes",
+      "tema": "Manejo nutricional en diabetes mellitus tipo 2",
+      "contenido": "El plan de alimentación en diabetes tipo 2 debe individualizarse. Se prioriza la consistencia en la cantidad y distribución de carbohidratos a lo largo del día para evitar variabilidad glucémica. Se recomienda preferir carbohidratos de bajo índice glucémico y alto contenido de fibra (cereales integrales, leguminosas, verduras). El consumo de fibra soluble contribuye a moderar la respuesta glucémica postprandial.",
+      "fuente_id": "nom-015",
+      "aplicacion_guardrail": "Verificar distribución de carbohidratos entre comidas; alertar si una sola comida concentra una proporción desproporcionada del total diario."
+    },
+    {
+      "id": "doc-005",
+      "condicion": "diabetes",
+      "tema": "Distribución de carbohidratos por tiempo de comida",
+      "contenido": "En pacientes con diabetes se recomienda distribuir los carbohidratos en tres comidas principales y colaciones según el esquema terapéutico, evitando cargas elevadas concentradas en un solo tiempo de comida. La evidencia respalda que la distribución uniforme reduce los picos glucémicos postprandiales.",
+      "fuente_id": "nom-015",
+      "aplicacion_guardrail": "Validar que ninguna comida individual exceda ~40% del total de carbohidratos del día."
+    },
+    {
+      "id": "doc-006",
+      "condicion": "hipertension",
+      "tema": "Restricción de sodio en hipertensión arterial",
+      "contenido": "En pacientes con hipertensión arterial sistémica se recomienda una restricción de sodio más estricta que en población general, habitualmente por debajo de 1500 mg diarios. Se recomienda un patrón alimentario rico en frutas, verduras, lácteos descremados, cereales integrales y bajo en grasas saturadas, con adecuado aporte de potasio, calcio y magnesio.",
+      "fuente_id": "nom-030",
+      "aplicacion_guardrail": "Aplicar tope de 1500 mg de sodio diarios cuando el usuario declare hipertensión."
+    },
+    {
+      "id": "doc-007",
+      "condicion": "hipertension",
+      "tema": "Alimentos a limitar en hipertensión",
+      "contenido": "Se recomienda limitar embutidos, carnes procesadas, quesos madurados, alimentos enlatados en salmuera, botanas saladas, sopas y caldos instantáneos, y condimentos con alto contenido de sodio. La lectura del etiquetado nutricional es una herramienta clave para identificar el contenido de sodio por porción.",
+      "fuente_id": "nom-030",
+      "aplicacion_guardrail": "Marcar como incompatibles los productos con sellos de advertencia por exceso de sodio cuando el usuario declare hipertensión."
+    },
+    {
+      "id": "doc-008",
+      "condicion": "renal",
+      "tema": "Restricción proteica en enfermedad renal crónica",
+      "contenido": "En enfermedad renal crónica sin diálisis suele indicarse una restricción proteica moderada, habitualmente entre 0.6 y 0.8 gramos de proteína por kilogramo de peso corporal al día, con el objetivo de reducir la carga de trabajo renal. Esta indicación requiere supervisión estrecha de un profesional de la salud para evitar desnutrición proteico-energética.",
+      "fuente_id": "nom-043",
+      "aplicacion_guardrail": "Aplicar tope de proteína calculado sobre el peso del usuario cuando declare condición renal. Mostrar aviso explícito de que esta condición requiere supervisión profesional."
+    },
+    {
+      "id": "doc-009",
+      "condicion": "general",
+      "tema": "Estimación del gasto energético",
+      "contenido": "El gasto energético total se estima a partir del gasto energético basal multiplicado por un factor de actividad física. Las ecuaciones de Mifflin-St Jeor y Harris-Benedict son las de uso más extendido en la práctica clínica para estimar el gasto basal a partir de peso, talla, edad y sexo. Los factores de actividad van habitualmente de 1.2 (sedentario) a 1.9 (actividad muy intensa).",
+      "fuente_id": "fao-who-energia",
+      "aplicacion_guardrail": "Verificar que el requerimiento calórico calculado sea coherente con los datos antropométricos del usuario antes de generar el plan."
+    },
+    {
+      "id": "doc-010",
+      "condicion": "general",
+      "tema": "Sistema de equivalencias para sustitución de alimentos",
+      "contenido": "El Sistema Mexicano de Alimentos Equivalentes agrupa los alimentos por su aporte nutricional similar, permitiendo intercambiar alimentos dentro de un mismo grupo sin alterar significativamente el aporte de energía y macronutrientes del plan. Los grupos incluyen verduras, frutas, cereales, leguminosas, alimentos de origen animal, leche, aceites y grasas, y azúcares.",
+      "fuente_id": "smae",
+      "aplicacion_guardrail": "Base para el módulo de sustitución por presupuesto/disponibilidad (Fase 4): permitir intercambios solo dentro del mismo grupo de equivalencia."
+    },
+    {
+      "id": "doc-011",
+      "condicion": "general",
+      "tema": "Plato del Bien Comer",
+      "contenido": "La orientación alimentaria en México se basa en el Plato del Bien Comer, que agrupa los alimentos en tres grupos: verduras y frutas; cereales; y leguminosas y alimentos de origen animal. Se recomienda incluir al menos un alimento de cada grupo en cada tiempo de comida, consumir la mayor variedad posible de alimentos y moderar el consumo de grasas, azúcares y sal.",
+      "fuente_id": "nom-043",
+      "aplicacion_guardrail": "Verificar que cada tiempo de comida principal del plan incluya representación de los tres grupos."
+    },
+    {
+      "id": "doc-012",
+      "condicion": "general",
+      "tema": "Etiquetado frontal de advertencia en México",
+      "contenido": "El etiquetado frontal mexicano incluye sellos de advertencia octagonales para productos con exceso de calorías, azúcares, grasas saturadas, grasas trans y sodio. Estos sellos permiten identificar rápidamente productos de baja calidad nutricional y son un criterio objetivo para filtrar recomendaciones.",
+      "fuente_id": "nom-043",
+      "aplicacion_guardrail": "Al validar productos con OpenFoodFacts, usar el contenido nutricional para inferir sellos y priorizar productos sin sellos de advertencia."
+    }
+  ]
+}

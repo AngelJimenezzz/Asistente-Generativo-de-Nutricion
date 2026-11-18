@@ -6,6 +6,7 @@ import { colors, spacing } from '../theme/colors';
 import { useUser } from '../context/UserContext';
 import { PRIMARY_GOAL_OPTIONS, BUDGET_TIER_OPTIONS, DIET_PHILOSOPHY_OPTIONS } from '../data/onboardingOptions';
 import { getReminderPreference, setReminderPreference } from '../utils/notifications';
+import PrivacyModal from '../components/PrivacyModal';
 
 const REMINDER_HOUR_OPTIONS = [7, 9, 12, 18, 21];
 
@@ -28,6 +29,7 @@ function InfoRow({ icon, label, value }) {
 export default function ProfileScreen() {
   const { user, loading, error, refresh, startEditingProfile, logout } = useUser();
   const [reminder, setReminder] = useState({ enabled: true, hour: 9 });
+  const [privacyOpen, setPrivacyOpen] = useState(false);
 
   useEffect(() => {
     getReminderPreference().then(setReminder);
@@ -143,6 +145,11 @@ export default function ProfileScreen() {
           <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
         </Pressable>
 
+        <Pressable style={styles.privacyButton} onPress={() => setPrivacyOpen(true)}>
+          <Ionicons name="shield-checkmark-outline" size={16} color={colors.textMuted} />
+          <Text style={styles.privacyButtonText}>Aviso de privacidad</Text>
+        </Pressable>
+
         <Text style={styles.disclaimer}>
           Esta aplicación es una herramienta de apoyo y no sustituye la consulta con un
           profesional de la salud.
@@ -152,6 +159,8 @@ export default function ProfileScreen() {
           Datos de productos proporcionados por Open Food Facts (ODbL).
         </Text>
       </ScrollView>
+
+      <PrivacyModal visible={privacyOpen} onClose={() => setPrivacyOpen(false)} />
     </SafeAreaView>
   );
 }
@@ -220,6 +229,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   logoutButtonText: { color: colors.danger, fontWeight: '700', fontSize: 13 },
+  privacyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+  },
+  privacyButtonText: { color: colors.textMuted, fontWeight: '600', fontSize: 12 },
   disclaimer: {
     fontSize: 12,
     color: colors.textMuted,

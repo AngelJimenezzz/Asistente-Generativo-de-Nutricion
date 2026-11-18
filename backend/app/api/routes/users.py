@@ -1,9 +1,10 @@
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from app.api.deps import get_database
+from app.core.rate_limit import limiter
 from app.guardrails.engine import run_profile_guardrails
 from app.models.user import UserCreate, UserOut, UserUpdate
 from app.utils.mongo import doc_to_dict
@@ -24,7 +25,10 @@ def _check_profile_guardrails(payload: UserCreate | UserUpdate) -> None:
 
 
 @router.post("", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-async def create_user(payload: UserCreate, db: AsyncIOMotorDatabase = Depends(get_database)):
+@limiter.limit("20/hour")
+async def create_user(request: Request, payload: UserCreate, db: AsyncIOMotorDatabase = Depends(get_database)):
+    # Endpoint público sin autenticación — el límite por IP evita que un bot
+    # llene la base de datos de usuarios falsos sin costo real para nadie.
     _check_profile_guardrails(payload)
 
     document = payload.model_dump()

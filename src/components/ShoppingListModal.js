@@ -24,7 +24,7 @@ export default function ShoppingListModal({ visible, days, onClose }) {
         <View style={styles.sheet}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>Lista de compras</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
+            <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel="Cerrar">
               <Ionicons name="close" size={24} color={colors.textMuted} />
             </Pressable>
           </View>

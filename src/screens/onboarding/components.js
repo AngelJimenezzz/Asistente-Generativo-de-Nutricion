@@ -111,7 +111,7 @@ export function ChipListInput({ value, onChange, placeholder }) {
           placeholderTextColor={colors.textMuted}
           onSubmitEditing={add}
         />
-        <Pressable style={styles.addButton} onPress={add}>
+        <Pressable style={styles.addButton} onPress={add} accessibilityRole="button" accessibilityLabel="Agregar">
           <Ionicons name="add" size={20} color="#FFF" />
         </Pressable>
       </View>
@@ -119,7 +119,7 @@ export function ChipListInput({ value, onChange, placeholder }) {
         {value.map((item, i) => (
           <View key={`${item}-${i}`} style={styles.chip}>
             <Text style={styles.chipText}>{item}</Text>
-            <Pressable onPress={() => remove(i)}>
+            <Pressable onPress={() => remove(i)} accessibilityRole="button" accessibilityLabel={`Quitar ${item}`}>
               <Ionicons name="close" size={14} color={colors.textMuted} />
             </Pressable>
           </View>

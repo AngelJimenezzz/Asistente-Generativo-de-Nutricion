@@ -85,13 +85,23 @@ export default function OnboardingScreen({ existingUser, onComplete, onCancel })
     <SafeAreaView style={styles.safe} edges={['top']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.headerRow}>
-          <View style={styles.progressRow}>
+          <View
+            style={styles.progressRow}
+            accessible
+            accessibilityRole="progressbar"
+            accessibilityLabel={`Paso ${stepIndex + 1} de ${STEPS.length}`}
+          >
             {STEPS.map((_, i) => (
               <View key={i} style={[styles.dot, i <= stepIndex && styles.dotActive]} />
             ))}
           </View>
           {onCancel && (
-            <Pressable style={styles.cancelButton} onPress={onCancel}>
+            <Pressable
+              style={styles.cancelButton}
+              onPress={onCancel}
+              accessibilityRole="button"
+              accessibilityLabel="Cancelar edición de perfil"
+            >
               <Ionicons name="close" size={22} color={colors.textMuted} />
             </Pressable>
           )}
@@ -107,7 +117,13 @@ export default function OnboardingScreen({ existingUser, onComplete, onCancel })
 
         <View style={styles.navRow}>
           {!isFirstStep && (
-            <Pressable style={styles.backButton} onPress={goBack} disabled={submitting}>
+            <Pressable
+              style={styles.backButton}
+              onPress={goBack}
+              disabled={submitting}
+              accessibilityRole="button"
+              accessibilityLabel="Paso anterior"
+            >
               <Ionicons name="chevron-back" size={20} color={colors.text} />
             </Pressable>
           )}

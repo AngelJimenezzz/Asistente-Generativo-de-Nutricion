@@ -81,7 +81,7 @@ export default function Step4Dietary({ data, update }) {
           {dietary.dislikedFoods.map((f) => (
             <View key={f.barcode ?? f.name} style={styles.chip}>
               <Text style={styles.chipText}>{f.name}</Text>
-              <Pressable onPress={() => removeDisliked(f.barcode)}>
+              <Pressable onPress={() => removeDisliked(f.barcode)} accessibilityRole="button" accessibilityLabel={`Quitar ${f.name}`}>
                 <Ionicons name="close" size={14} color={colors.textMuted} />
               </Pressable>
             </View>

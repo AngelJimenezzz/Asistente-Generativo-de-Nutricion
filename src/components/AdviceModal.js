@@ -62,7 +62,7 @@ export default function AdviceModal({ visible, title, explanation, placeholder, 
         <View style={styles.sheet}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>{title}</Text>
-            <Pressable onPress={handleClose} hitSlop={10}>
+            <Pressable onPress={handleClose} hitSlop={10} accessibilityRole="button" accessibilityLabel="Cerrar">
               <Ionicons name="close" size={24} color={colors.textMuted} />
             </Pressable>
           </View>

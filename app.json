@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "Asistente-Generativo-de-Nutricion",
+    "name": "Asistente de Nutrición de Precisión",
     "slug": "Asistente-Generativo-de-Nutricion",
+    "description": "App de nutrición de precisión con IA generativa: planes de comida personalizados, validados por reglas clínicas deterministas antes de mostrarse al usuario.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +17,13 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Asistente de Nutrición de Precisión",
+      "shortName": "Nutrición IA",
+      "description": "App de nutrición de precisión con IA generativa: planes de comida personalizados, validados por reglas clínicas deterministas antes de mostrarse al usuario.",
+      "lang": "es",
+      "themeColor": "#2F6F4E",
+      "backgroundColor": "#FAFAF8"
     },
     "plugins": [
       "expo-status-bar",

@@ -89,8 +89,15 @@ export default function ChatScreen() {
             placeholderTextColor={colors.textMuted}
             editable={!sending}
             onSubmitEditing={send}
+            accessibilityLabel="Mensaje para el asistente"
           />
-          <Pressable style={styles.sendButton} onPress={send} disabled={sending}>
+          <Pressable
+            style={styles.sendButton}
+            onPress={send}
+            disabled={sending}
+            accessibilityRole="button"
+            accessibilityLabel="Enviar mensaje"
+          >
             <Ionicons name="send" size={18} color="#FFF" />
           </Pressable>
         </View>

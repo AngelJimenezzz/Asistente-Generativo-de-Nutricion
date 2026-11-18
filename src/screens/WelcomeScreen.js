@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme/colors';
+import PrivacyModal from '../components/PrivacyModal';
 
 const POINTS = [
   {
@@ -28,6 +29,8 @@ const POINTS = [
 ];
 
 export default function WelcomeScreen({ onContinue }) {
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -52,6 +55,10 @@ export default function WelcomeScreen({ onContinue }) {
           Esta aplicación es una herramienta de apoyo y no sustituye la consulta con un
           profesional de la salud.
         </Text>
+
+        <Pressable onPress={() => setPrivacyOpen(true)} style={styles.privacyLink}>
+          <Text style={styles.privacyLinkText}>Antes de registrarte, lee el aviso de privacidad</Text>
+        </Pressable>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -60,6 +67,8 @@ export default function WelcomeScreen({ onContinue }) {
           <Ionicons name="arrow-forward" size={18} color="#FFF" />
         </Pressable>
       </View>
+
+      <PrivacyModal visible={privacyOpen} onClose={() => setPrivacyOpen(false)} />
     </SafeAreaView>
   );
 }
@@ -97,6 +106,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     lineHeight: 17,
   },
+  privacyLink: { alignItems: 'center', marginTop: spacing.sm, padding: spacing.sm },
+  privacyLinkText: { fontSize: 12, color: colors.primary, fontWeight: '600', textDecorationLine: 'underline' },
   footer: {
     padding: spacing.lg,
     borderTopWidth: 1,

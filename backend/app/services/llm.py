@@ -117,26 +117,41 @@ async def _chat_completion(messages: list[dict], *, json_mode: bool, max_tokens:
     raise LLMError(f"No se pudo consultar el modelo generativo: {last_error}")
 
 
-async def generate_json(system_prompt: str, user_prompt: str, max_tokens: int = 3000) -> dict:
+async def generate_json(system_prompt: str, user_prompt: str, max_tokens: int = 5000) -> dict:
     """
     Llama al modelo en modo JSON (JSON Mode de Together/OpenAI-compatible) y
     devuelve el contenido ya parseado como dict. Usado para generar planes.
+
+    El modelo actual (ver docstring del módulo) es "de razonamiento": gasta
+    una cantidad variable de `max_tokens` pensando antes de escribir la
+    respuesta final, así que a veces el JSON llega cortado a la mitad (ya
+    pasó en producción: un plan completo con 3 comidas y explicaciones
+    clínicas se truncó con max_tokens=3000). Si eso pasa, se reintenta una
+    vez con el doble de presupuesto antes de rendirse — igual que el caso de
+    `content` vacío en `_chat_completion`.
     """
-    content, _usage = await _chat_completion(
-        [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        json_mode=True,
-        max_tokens=max_tokens,
-    )
-    try:
-        return json.loads(content)
-    except (json.JSONDecodeError, TypeError) as exc:
-        raise LLMError(f"El modelo no devolvió un JSON válido: {exc}. Contenido: {content[:300]}") from exc
+    for attempt in range(2):
+        content, _usage = await _chat_completion(
+            [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            json_mode=True,
+            max_tokens=max_tokens,
+        )
+        try:
+            return json.loads(content)
+        except (json.JSONDecodeError, TypeError) as exc:
+            if attempt == 0:
+                max_tokens = min(max_tokens * 2, 10000)
+                logger.warning(
+                    "JSON truncado (%s), reintentando con max_tokens=%s", exc, max_tokens
+                )
+                continue
+            raise LLMError(f"El modelo no devolvió un JSON válido: {exc}. Contenido: {content[:300]}") from exc
 
 
-async def generate_json_with_usage(system_prompt: str, user_prompt: str, max_tokens: int = 3000) -> tuple[dict, dict]:
+async def generate_json_with_usage(system_prompt: str, user_prompt: str, max_tokens: int = 5000) -> tuple[dict, dict]:
     """Igual que `generate_json`, pero también regresa el `usage` de tokens de
     la llamada — lo necesita `scripts/generate_finetune_dataset.py` para medir
     gasto real contra el presupuesto prepagado de Together.ai."""

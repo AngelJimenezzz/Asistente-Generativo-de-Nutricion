@@ -24,10 +24,15 @@ export const PRIMARY_GOAL_OPTIONS = [
   { value: 'control_salud', label: 'Control de salud / enfermedad' },
 ];
 
+// El `value` interno "agresivo" no cambia (lo usan los guardrails del
+// backend para bloquear esta velocidad si hay una condición clínica
+// declarada — ver backend/app/guardrails/engine.py). Solo se suaviza la
+// etiqueta visible: en un formulario sobre salud, "agresivo" suena a algo
+// peligroso en vez de simplemente "rápido".
 export const PROGRESS_SPEED_OPTIONS = [
   { value: 'lento', label: 'Lento y sostenible' },
   { value: 'moderado', label: 'Moderado' },
-  { value: 'agresivo', label: 'Agresivo / rápido' },
+  { value: 'agresivo', label: 'Rápido' },
 ];
 
 export const PATHOLOGY_OPTIONS = [
@@ -98,17 +103,4 @@ export const FLAVOR_PREFERENCE_OPTIONS = [
   { value: 'dulce', label: 'Dulce' },
   { value: 'salado', label: 'Salado' },
   { value: 'ambos', label: 'Ambos' },
-];
-
-// País del usuario — no estado/provincia. La idea es que el sistema pueda
-// adaptar culturalmente las sugerencias de alimentos (ingredientes típicos,
-// nombres locales) si algún día alguien fuera de México usa la app.
-// México va primero porque es el mercado principal del proyecto.
-export const COUNTRIES = [
-  'México',
-  'Argentina', 'Bolivia', 'Chile', 'Colombia', 'Costa Rica', 'Cuba',
-  'Ecuador', 'El Salvador', 'España', 'Estados Unidos', 'Guatemala',
-  'Honduras', 'Nicaragua', 'Panamá', 'Paraguay', 'Perú',
-  'Puerto Rico', 'República Dominicana', 'Uruguay', 'Venezuela',
-  'Otro país',
 ];

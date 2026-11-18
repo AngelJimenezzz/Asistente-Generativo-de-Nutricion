@@ -22,7 +22,10 @@ function buildInitialFormData(existingUser) {
     goalProfile: { primaryGoal: null, progressSpeed: null },
     clinicalProfile: { pathologies: [], digestiveConditions: [], currentMedications: [], symptomsNotes: '' },
     dietaryProfile: { allergies: [], dietPhilosophy: null, dislikedFoods: [] },
-    lifestyleProfile: { budgetTier: null, kitchenEquipment: [], cookingTime: null, mealsPerDay: null, region: null },
+    // region fijo en 'México': el proyecto está pensado para este mercado
+    // (recetas, nombres de alimentos, SMAE) y pedir el país solo agregaba un
+    // paso sin un uso real todavía.
+    lifestyleProfile: { budgetTier: null, kitchenEquipment: [], cookingTime: null, mealsPerDay: null, region: 'México' },
     flexibilityProfile: { strictness: null, flavorPreference: null },
   };
 

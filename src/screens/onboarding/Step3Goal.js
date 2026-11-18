@@ -37,7 +37,7 @@ export default function Step3Goal({ data, update }) {
 
       {isAggressiveBlocked && (
         <Disclaimer>
-          Como declaraste una condición clínica, la opción "Agresivo / rápido" no está
+          Como declaraste una condición clínica, la opción "Rápido" no está
           disponible por seguridad. Tu plan usará un ritmo más cuidadoso.
         </Disclaimer>
       )}

@@ -43,7 +43,6 @@ export default function Step7Review({ data, onSubmit, submitting, submitError })
           value={labelFor(DIET_PHILOSOPHY_OPTIONS, data.dietaryProfile.dietPhilosophy)}
         />
         <SummaryRow label="Presupuesto" value={labelFor(BUDGET_TIER_OPTIONS, data.lifestyleProfile.budgetTier)} />
-        <SummaryRow label="País" value={data.lifestyleProfile.region} />
       </View>
 
       {submitError && <Text style={styles.errorText}>{submitError}</Text>}

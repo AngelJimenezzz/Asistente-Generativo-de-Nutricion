@@ -240,7 +240,7 @@ async def swap_meal(request: Request, plan_id: str, meal_id: str, db: AsyncIOMot
     user_prompt = build_meal_swap_prompt(user, knowledge_documents, current_meal.name, current_meal.items)
 
     try:
-        raw_meal = await generate_json(MEAL_SWAP_SYSTEM_PROMPT, user_prompt, max_tokens=500)
+        raw_meal = await generate_json(MEAL_SWAP_SYSTEM_PROMPT, user_prompt, max_tokens=900)
     except LLMError as exc:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput, Pressable, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
@@ -8,11 +8,17 @@ import { colors, spacing } from '../theme/colors';
 import { useUser } from '../context/UserContext';
 import { api } from '../services/api';
 
+// clientOnly: el saludo es decorativo, no una respuesta real del modelo — si se
+// manda al backend como parte del historial, es el primer mensaje de la
+// conversación con rol "assistant" (antes de cualquier mensaje "user"), y
+// Together.ai rechaza esa forma con 400 Bad Request. Se excluye del payload
+// al enviar (ver `send`).
 const INITIAL_MESSAGES = [
   {
     id: '0',
     role: 'assistant',
     content: 'Hola, soy tu asistente de nutrición. Cuéntame cómo te sientes hoy o pregúntame sobre tu plan.',
+    clientOnly: true,
   },
 ];
 
@@ -21,6 +27,14 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const listRef = useRef(null);
+
+  const scrollToBottom = () => {
+    // El pequeño retraso deja que el FlatList termine de medir el nuevo
+    // contenido antes de pedirle que baje — si no, a veces calcula el final
+    // con el tamaño anterior y se queda un poco corto.
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+  };
 
   const send = async () => {
     const text = input.trim();
@@ -31,11 +45,12 @@ export default function ChatScreen() {
     setMessages(history);
     setInput('');
     setSending(true);
+    scrollToBottom();
 
     try {
       const { reply } = await api.sendChatMessage(
         user.id,
-        history.map(({ role, content }) => ({ role, content }))
+        history.filter((m) => !m.clientOnly).map(({ role, content }) => ({ role, content }))
       );
       setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: reply }]);
     } catch (err) {
@@ -45,6 +60,7 @@ export default function ChatScreen() {
       ]);
     } finally {
       setSending(false);
+      scrollToBottom();
     }
   };
 
@@ -56,9 +72,11 @@ export default function ChatScreen() {
         keyboardVerticalOffset={80}
       >
         <FlatList
+          ref={listRef}
           data={messages}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          onContentSizeChange={scrollToBottom}
           renderItem={({ item }) => (
             <View
               style={[

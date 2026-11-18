@@ -122,21 +122,23 @@ export default function PlanScreen() {
             )}
 
             {days.length > 0 && (
-              <View style={styles.exportRow}>
-                <Pressable style={styles.exportButton} onPress={() => runExport(exportPlanAsPdf)} disabled={exporting}>
-                  <Ionicons name="document-text-outline" size={16} color={colors.primary} />
-                  <Text style={styles.exportButtonText}>Exportar PDF</Text>
-                </Pressable>
-                <Pressable style={styles.exportButton} onPress={() => runExport(exportPlanAsExcel)} disabled={exporting}>
-                  <Ionicons name="grid-outline" size={16} color={colors.primary} />
-                  <Text style={styles.exportButtonText}>Exportar Excel</Text>
-                </Pressable>
-                <Pressable style={styles.exportButton} onPress={() => setShoppingListOpen(true)}>
-                  <Ionicons name="cart-outline" size={16} color={colors.primary} />
-                  <Text style={styles.exportButtonText}>Lista de compras</Text>
-                </Pressable>
-                {exporting && <ActivityIndicator color={colors.primary} size="small" />}
-              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.exportRowScroll}>
+                <View style={styles.exportRow}>
+                  <Pressable style={styles.exportButton} onPress={() => runExport(exportPlanAsPdf)} disabled={exporting}>
+                    <Ionicons name="document-text-outline" size={16} color={colors.primary} />
+                    <Text style={styles.exportButtonText}>Exportar PDF</Text>
+                  </Pressable>
+                  <Pressable style={styles.exportButton} onPress={() => runExport(exportPlanAsExcel)} disabled={exporting}>
+                    <Ionicons name="grid-outline" size={16} color={colors.primary} />
+                    <Text style={styles.exportButtonText}>Exportar Excel</Text>
+                  </Pressable>
+                  <Pressable style={styles.exportButton} onPress={() => setShoppingListOpen(true)}>
+                    <Ionicons name="cart-outline" size={16} color={colors.primary} />
+                    <Text style={styles.exportButtonText}>Lista de compras</Text>
+                  </Pressable>
+                  {exporting && <ActivityIndicator color={colors.primary} size="small" />}
+                </View>
+              </ScrollView>
             )}
             {exportError && <Text style={styles.whyText}>{exportError}</Text>}
 
@@ -325,7 +327,8 @@ const styles = StyleSheet.create({
   dayTabSelected: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   dayTabText: { fontSize: 13, fontWeight: '600', color: colors.text },
   dayTabTextSelected: { color: colors.primary },
-  exportRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
+  exportRowScroll: { marginBottom: spacing.md },
+  exportRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingRight: spacing.lg },
   exportButton: {
     flexDirection: 'row',
     alignItems: 'center',

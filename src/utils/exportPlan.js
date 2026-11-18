@@ -8,6 +8,7 @@ import * as Sharing from 'expo-sharing';
 // expo-file-system/expo-print/expo-sharing va detrás de un check de Platform.
 import * as FileSystem from 'expo-file-system/legacy';
 import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
 
 function escapeHtml(text) {
   return String(text)
@@ -65,24 +66,105 @@ function buildHtml(days, userName) {
     </html>`;
 }
 
-export async function exportPlanAsPdf(days, userName) {
-  const html = buildHtml(days, userName);
+// Construye el PDF directamente con jsPDF (en vez de HTML + diálogo de
+// impresión del navegador) para que en web se pueda descargar como archivo
+// real, igual que el Excel — abrir el diálogo de impresión y esperar a que
+// el usuario elija "Guardar como PDF" no es lo mismo que descargar un .pdf.
+const PAGE_WIDTH = 210;
+const PAGE_HEIGHT = 297;
+const MARGIN = 18;
+const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
 
-  if (Platform.OS === 'web') {
-    // expo-print no tiene implementación de printToFileAsync en web. En su
-    // lugar, se abre una ventana con el HTML y se dispara el diálogo de
-    // impresión del navegador — desde ahí el usuario puede "Guardar como PDF".
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      throw new Error('El navegador bloqueó la ventana de impresión. Permite ventanas emergentes e intenta de nuevo.');
+function buildPdfDoc(days, userName) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  let y = MARGIN;
+
+  const ensureSpace = (needed) => {
+    if (y + needed > PAGE_HEIGHT - MARGIN) {
+      doc.addPage();
+      y = MARGIN;
     }
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
+  };
+
+  doc.setTextColor(47, 111, 78);
+  doc.setFontSize(18);
+  doc.setFont(undefined, 'bold');
+  doc.text('Plan de alimentación semanal', MARGIN, y);
+  y += 7;
+
+  doc.setTextColor(107, 122, 114);
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  doc.text(`${userName} · generado el ${new Date().toLocaleDateString('es-MX')}`, MARGIN, y);
+  y += 10;
+
+  days.forEach((day) => {
+    ensureSpace(14);
+    doc.setTextColor(47, 111, 78);
+    doc.setFontSize(13);
+    doc.setFont(undefined, 'bold');
+    doc.text(day.dayOfWeek || `Día ${day.dayIndex}`, MARGIN, y);
+    y += 6;
+
+    doc.setTextColor(107, 122, 114);
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'normal');
+    doc.text(
+      `${day.calories} kcal · ${day.macros.protein}g proteína · ${day.macros.carbs}g carbohidratos · ${day.macros.fat}g grasa`,
+      MARGIN,
+      y
+    );
+    y += 7;
+
+    day.meals.forEach((meal) => {
+      ensureSpace(10);
+      doc.setTextColor(31, 42, 36);
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.text(meal.name, MARGIN, y);
+      y += 5;
+
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9);
+      meal.items.forEach((item) => {
+        const lines = doc.splitTextToSize(`• ${item}`, CONTENT_WIDTH - 2);
+        ensureSpace(lines.length * 4.2);
+        doc.text(lines, MARGIN + 2, y);
+        y += lines.length * 4.2;
+      });
+
+      doc.setTextColor(107, 122, 114);
+      doc.setFont(undefined, 'italic');
+      const whyLines = doc.splitTextToSize(meal.why, CONTENT_WIDTH - 2);
+      ensureSpace(whyLines.length * 4);
+      doc.text(whyLines, MARGIN + 2, y);
+      y += whyLines.length * 4 + 4;
+    });
+
+    y += 3;
+  });
+
+  ensureSpace(10);
+  doc.setTextColor(107, 122, 114);
+  doc.setFontSize(8);
+  doc.setFont(undefined, 'italic');
+  doc.text(
+    'Esta aplicación es una herramienta de apoyo y no sustituye la consulta con un profesional de la salud.',
+    MARGIN,
+    y
+  );
+
+  return doc;
+}
+
+export async function exportPlanAsPdf(days, userName) {
+  if (Platform.OS === 'web') {
+    const doc = buildPdfDoc(days, userName);
+    doc.save(`plan-${userName.replace(/\s+/g, '_')}.pdf`);
     return null;
   }
 
+  const html = buildHtml(days, userName);
   const { uri } = await Print.printToFileAsync({ html });
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Plan de alimentación' });

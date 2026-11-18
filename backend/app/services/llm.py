@@ -1,17 +1,22 @@
 """
 Cliente del modelo generativo usado para el pipeline RAG (Fase 3, parte 1).
 
-Modelo: MiniMax-M3 vía Together.ai (pago por uso). Hasta el 2026-10-26 este
-pipeline usaba Llama 3.3 70B Instruct Turbo, pero Together quitó TODOS los
-modelos de la familia Llama de su catálogo "serverless" (se confirmó en vivo:
-ningún modelo Llama, de ningún tamaño, está disponible en modo serverless para
-esta cuenta — es un cambio de la plataforma, no algo específico de esta cuenta
-ni un problema de saldo/tarjeta). Se probaron en vivo los modelos que sí siguen
-en modo serverless (ver together.ai/models, filtro "Serverless") y MiniMax-M3
-fue el que respondió de forma más limpia y consistente en modo JSON, sin gastar
-el presupuesto de tokens en "razonamiento" interno antes de la respuesta final
-(a diferencia de otros candidatos como DeepSeek V4.1 Flash o GLM 5.x, que son
-modelos de razonamiento y arriesgan truncar el JSON de salida).
+Modelo: GPT-OSS 120B (OpenAI, open-weight) vía Together.ai (pago por uso).
+Together ha ido reduciendo su catálogo "serverless" varias veces durante este
+proyecto (primero quitó toda la familia Llama, el 2026-10-26; después, el
+2026-11-18, también quitó MiniMax-M3, que era el modelo que usábamos hasta
+ese momento) — es un cambio de la plataforma, no algo específico de esta
+cuenta ni un problema de saldo/tarjeta. Se volvió a probar en vivo el
+catálogo completo de modelos "serverless" disponibles para esta cuenta y,
+de los pocos que seguían respondiendo, GPT-OSS 120B fue el único
+razonablemente rápido y confiable: aunque SÍ es un modelo "de razonamiento"
+(gasta parte del presupuesto de `max_tokens` en un campo separado
+`reasoning_content` antes de dar la respuesta final), se probó en vivo con
+el mismo tipo de prompt que usa este proyecto (JSON Mode y texto libre) y el
+campo final `content` llegó completo y con JSON válido sin truncarse, incluso
+con el único `max_tokens` más bajo (600, el del chat) — los demás candidatos
+de razonamiento probados (MiniMax-M3.1-Flash, GLM-5.3-Flash, Qwen3.5-9B)
+agotaban TODO el presupuesto en razonamiento y devolvían `content: null`.
 
 Es INTENCIONALMENTE distinto al modelo que se afinará con QLoRA más adelante
 (Llama 3.1 8B, descargado directo de Hugging Face en Colab) — el RAG no
@@ -34,7 +39,7 @@ from app.core.config import get_settings
 logger = logging.getLogger(__name__)
 
 TOGETHER_API_URL = "https://api.together.xyz/v1/chat/completions"
-TOGETHER_MODEL = "MiniMaxAI/MiniMax-M3"
+TOGETHER_MODEL = "openai/gpt-oss-120b"
 REQUEST_TIMEOUT = 90.0
 MAX_RETRIES = 2
 # Together (como cualquier API compartida) a veces devuelve 503/429 por un
@@ -84,7 +89,26 @@ async def _chat_completion(messages: list[dict], *, json_mode: bool, max_tokens:
                     logger.error("TOGETHER DEBUG body: %s", resp.text[:1500])
                 resp.raise_for_status()
                 body = resp.json()
-                return body["choices"][0]["message"]["content"], body.get("usage", {})
+                content = body["choices"][0]["message"].get("content")
+                if content is None:
+                    # Modelo "de razonamiento" (gasta parte de max_tokens en el
+                    # campo separado `reasoning_content`) que agotó todo el
+                    # presupuesto razonando y no dejó nada para la respuesta
+                    # final. Reintentar con más tokens antes de rendirse —
+                    # igual que un 503, es una falla momentánea del modelo,
+                    # no un error de nuestro código.
+                    if attempt < MAX_RETRIES:
+                        payload["max_tokens"] = min(payload["max_tokens"] * 2, 8000)
+                        logger.warning(
+                            "Together devolvió content vacío (razonamiento agotó el presupuesto), "
+                            "reintentando con max_tokens=%s", payload["max_tokens"]
+                        )
+                        continue
+                    raise LLMError(
+                        "El modelo gastó todo su presupuesto de tokens razonando y no "
+                        "alcanzó a dar una respuesta final. Intenta de nuevo."
+                    )
+                return content, body.get("usage", {})
         except httpx.HTTPError as exc:
             last_error = exc
             if attempt < MAX_RETRIES:
@@ -93,7 +117,7 @@ async def _chat_completion(messages: list[dict], *, json_mode: bool, max_tokens:
     raise LLMError(f"No se pudo consultar el modelo generativo: {last_error}")
 
 
-async def generate_json(system_prompt: str, user_prompt: str, max_tokens: int = 1500) -> dict:
+async def generate_json(system_prompt: str, user_prompt: str, max_tokens: int = 3000) -> dict:
     """
     Llama al modelo en modo JSON (JSON Mode de Together/OpenAI-compatible) y
     devuelve el contenido ya parseado como dict. Usado para generar planes.
@@ -112,7 +136,7 @@ async def generate_json(system_prompt: str, user_prompt: str, max_tokens: int = 
         raise LLMError(f"El modelo no devolvió un JSON válido: {exc}. Contenido: {content[:300]}") from exc
 
 
-async def generate_json_with_usage(system_prompt: str, user_prompt: str, max_tokens: int = 1500) -> tuple[dict, dict]:
+async def generate_json_with_usage(system_prompt: str, user_prompt: str, max_tokens: int = 3000) -> tuple[dict, dict]:
     """Igual que `generate_json`, pero también regresa el `usage` de tokens de
     la llamada — lo necesita `scripts/generate_finetune_dataset.py` para medir
     gasto real contra el presupuesto prepagado de Together.ai."""
@@ -138,5 +162,5 @@ async def generate_reply(system_prompt: str, conversation: list[dict]) -> str:
     Usado para el chat del asistente.
     """
     messages = [{"role": "system", "content": system_prompt}, *conversation]
-    content, _usage = await _chat_completion(messages, json_mode=False, max_tokens=600)
+    content, _usage = await _chat_completion(messages, json_mode=False, max_tokens=1000)
     return content

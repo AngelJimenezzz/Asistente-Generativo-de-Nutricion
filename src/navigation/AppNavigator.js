@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HomeScreen from '../screens/HomeScreen';
 import PlanScreen from '../screens/PlanScreen';
@@ -20,6 +21,13 @@ const ICONS = {
 };
 
 export default function AppNavigator() {
+  // En navegadores móviles (sobre todo Safari en iOS) la barra de
+  // direcciones puede quedar encima del contenido fijo al fondo de la
+  // pantalla si no se le resta el "safe area inset" inferior — por eso el
+  // menú se veía recortado en web. `insets.bottom` ya trae ese valor
+  // calculado (en nativo normalmente es 0, salvo iPhone con home indicator).
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -28,8 +36,8 @@ export default function AppNavigator() {
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
           borderTopColor: colors.border,
-          height: 62,
-          paddingBottom: 8,
+          height: 56 + Math.max(insets.bottom, 10),
+          paddingBottom: Math.max(insets.bottom, 10),
           paddingTop: 6,
         },
         tabBarIcon: ({ color, size }) => (

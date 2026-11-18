@@ -10,6 +10,7 @@ import { api } from '../services/api';
 import AdviceModal from '../components/AdviceModal';
 import GeneratingPlanLoader from '../components/GeneratingPlanLoader';
 import ShoppingListModal from '../components/ShoppingListModal';
+import DailySummaryRing from '../components/DailySummaryRing';
 
 export default function PlanScreen() {
   const { user } = useUser();
@@ -140,10 +141,11 @@ export default function PlanScreen() {
             {exportError && <Text style={styles.whyText}>{exportError}</Text>}
 
             {activeDay && (
-              <Text style={styles.dayMacros}>
-                {activeDay.calories} kcal · {activeDay.macros.protein}g prot ·{' '}
-                {activeDay.macros.carbs}g carb · {activeDay.macros.fat}g grasa
-              </Text>
+              <DailySummaryRing
+                calories={activeDay.calories}
+                macros={activeDay.macros}
+                mealsCount={activeDay.meals.length}
+              />
             )}
 
             {activeDay?.meals.map((meal) => {
@@ -335,7 +337,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   exportButtonText: { fontSize: 13, fontWeight: '600', color: colors.primary },
-  dayMacros: { fontSize: 13, color: colors.textMuted, marginBottom: spacing.md },
   offlineBanner: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,4 +1,4 @@
-# Asistente Generativo de Nutrición de Precisión
+# BocadIA — Asistente Generativo de Nutrición de Precisión
 
 App móvil (React Native + Expo) con un backend propio (FastAPI + MongoDB) que genera
 planes nutricionales personalizados usando un modelo de lenguaje con RAG (recuperación

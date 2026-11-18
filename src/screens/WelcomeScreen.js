@@ -34,9 +34,9 @@ export default function WelcomeScreen({ onContinue }) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Bienvenido/a 👋</Text>
+        <Text style={styles.title}>Bienvenido/a a BocadIA 👋</Text>
         <Text style={styles.subtitle}>
-          Asistente Generativo de Nutrición de Precisión — antes de registrarte, esto es lo que hace la app:
+          Antes de registrarte, esto es lo que hace la app:
         </Text>
 
         {POINTS.map((point) => (

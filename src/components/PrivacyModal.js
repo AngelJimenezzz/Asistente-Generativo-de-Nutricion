@@ -7,7 +7,7 @@ const SECTIONS = [
   {
     title: 'Qué es esta app',
     body:
-      'Este es un proyecto de tesis de Ingeniería de Software (Universidad de Colima), no un ' +
+      'BocadIA es un proyecto de tesis de Ingeniería de Software (Universidad de Colima), no un ' +
       'servicio comercial. La demo pública existe para mostrar cómo funciona el prototipo — no ' +
       'está pensada para uso clínico real.',
   },

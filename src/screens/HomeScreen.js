@@ -8,6 +8,7 @@ import { PRIMARY_GOAL_OPTIONS } from '../data/onboardingOptions';
 import { useUser } from '../context/UserContext';
 import { useWeekPlan } from '../context/PlanContext';
 import GeneratingPlanLoader from '../components/GeneratingPlanLoader';
+import DailySummaryRing from '../components/DailySummaryRing';
 
 function goalLabel(primaryGoal) {
   return PRIMARY_GOAL_OPTIONS.find((o) => o.value === primaryGoal)?.label ?? '';
@@ -70,14 +71,13 @@ export default function HomeScreen() {
         {planLoading && !plan ? (
           <ActivityIndicator color={colors.primary} style={{ marginBottom: spacing.lg }} />
         ) : plan ? (
-          <View style={styles.viewPlanCard}>
-            <Text style={styles.viewPlanTitle}>Ya tienes tu plan de hoy</Text>
-            <Text style={styles.viewPlanSubtitle}>{plan.calories} kcal · {plan.meals.length} comidas</Text>
+          <>
+            <DailySummaryRing calories={plan.calories} macros={plan.macros} mealsCount={plan.meals.length} />
             <Pressable style={styles.viewPlanButton} onPress={() => navigation.navigate('Plan')}>
               <Text style={styles.viewPlanButtonText}>Ver mi plan</Text>
               <Ionicons name="chevron-forward" size={18} color="#FFF" />
             </Pressable>
-          </View>
+          </>
         ) : (
           <View style={styles.card}>
             <Text style={styles.cardText}>Todavía no tienes un plan para hoy.</Text>
@@ -129,16 +129,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   cardText: { fontSize: 13, color: colors.textMuted, marginBottom: spacing.sm },
-  viewPlanCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.lg,
-  },
-  viewPlanTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
-  viewPlanSubtitle: { fontSize: 13, color: colors.textMuted, marginTop: 2, marginBottom: spacing.md },
   viewPlanButton: {
     flexDirection: 'row',
     alignItems: 'center',

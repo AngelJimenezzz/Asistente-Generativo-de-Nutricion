@@ -67,6 +67,14 @@ async def _chat_completion(messages: list[dict], *, json_mode: bool, max_tokens:
         "messages": messages,
         "temperature": 0.4,
         "max_tokens": max_tokens,
+        # GPT-OSS 120B es "de razonamiento" y por defecto puede gastar 700+
+        # tokens solo pensando antes de escribir el JSON final, dejando muy
+        # poco presupuesto para la respuesta y truncándola a la mitad (pasó
+        # en producción varias veces). "low" bajó el gasto en razonamiento a
+        # ~30-45 tokens en pruebas repetidas, sin perder validez del JSON —
+        # para este caso (seguir un formato ya dado, no resolver un problema
+        # abierto) no hace falta que razone de más.
+        "reasoning_effort": "low",
     }
     if json_mode:
         payload["response_format"] = {"type": "json_object"}
